@@ -1,1 +1,1 @@
-from .module import StringSanitizer, NumberValidator,StringValidator,BooleanValidator
+from .src import StringSanitizer, NumberValidator,StringValidator,BooleanValidator

@@ -1,4 +1,4 @@
-from .module import NumberValidator, StringSanitizer, StringValidator, BooleanValidator
+from .src import NumberValidator, StringSanitizer, StringValidator, BooleanValidator
 
 
 class FieldValidationError(Exception):
