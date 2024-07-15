@@ -1,37 +1,14 @@
-from .src import NumberValidator, StringSanitizer, StringValidator, BooleanValidator
+from src import Model,Field
 
+if __name__ == '__main__':
+    class PersonModel(Model):
+        is_admin = Field.boolean(default=True)
+        gpa = Field.number(default=4.5)
+        last_name = Field.string(max_length=5)
 
-class FieldValidationError(Exception):
-    pass
-
-
-class Fields:
-    @staticmethod
-    def string():
-        return StringValidator()
-
-    @staticmethod
-    def number():
-        return NumberValidator()
-
-    @staticmethod
-    def boolean():
-        return BooleanValidator()
-
-
-class ValidatorMeta(type):
-    def __new__(cls, name, bases, dct):
-        dct['_fields'] = {k: v for k, v in dct.items() if isinstance(
-            v, (StringValidator, NumberValidator))}
-        return super().__new__(cls, name, bases, dct)
-
-        class ValidationModel(metaclass=ValidatorMeta):
-            def validate(self):
-                errors = {}
-                for field_name, field_validator in self._fields.items():
-                    value = getattr(self, field_name, None)
-                    field_errors = field_validator.validate(value)
-                    if field_errors:
-                        errors[field_name] = field_errors
-                if errors:
-                    raise FieldValidationError(errors)
+    p1 = PersonModel(is_admin=False, gpa=4.5,
+                     last_name="Smith", first_name="Mike")
+    # try:
+    
+    final_obj = p1.validate().build()
+    print(final_obj)
