@@ -145,11 +145,6 @@ class BaseModel:
             return True, value
 
 
-class ValidationError(Exception):
-    """Base class for validation errors."""
-    pass
-
-
 class FieldValidationError(Exception):
     """Exception raised for errors in the field validation process.
 
