@@ -1,5 +1,6 @@
 from typing import Union
 
+
 class BaseValidator:
     def __init__(self):
         self.validators = []
@@ -22,7 +23,8 @@ class BaseValidator:
         self.validators.append((validator, message, kwargs))
         return self
 
-class ValidationClasses:
+
+class BaseModel:
     class BooleanField(BaseValidator):
         def boolean(self, /, message="Must be a boolean", default: bool = None):
             """
@@ -142,32 +144,53 @@ class ValidationClasses:
                 return False, None
             return True, value
 
-class FieldValidationError(Exception):
+
+class ValidationError(Exception):
+    """Base class for validation errors."""
     pass
 
+
+class FieldValidationError(Exception):
+    """Exception raised for errors in the field validation process.
+
+    Attributes:
+        field -- field in which the error occurred
+        errors -- explanation of the errors
+    """
+
+    def __init__(self, message: str, errors: dict):
+        super().__init__(message)
+        self.errors = errors
+
+
 class Field:
-    string = ValidationClasses.StringField().string
-    boolean = ValidationClasses.BooleanField().boolean
-    number = ValidationClasses.NumberField().number
+    string = BaseModel.StringField().string
+    boolean = BaseModel.BooleanField().boolean
+    number = BaseModel.NumberField().number
+
 
 class ValidatorMeta(type):
     def __new__(cls, name, bases, dct):
-        dct['_fields'] = {k: v for k, v in dct.items() if isinstance(v, BaseValidator)}
+        dct['_fields'] = {k: v for k,
+                          v in dct.items() if isinstance(v, BaseValidator)}
         new_class = super().__new__(cls, name, bases, dct)
         for field_name, field in dct['_fields'].items():
             """Getter"""
+
             def getter(self, name=field_name):
                 return self.__dict__.get(name)
 
             """Setter"""
+
             def setter(self, value, name=field_name, field=field):
-                errors, field_value = field.valid(value)
-                if errors:
-                    raise FieldValidationError({name: errors})
-                self.__dict__[name] = field_value
+                # errors, field_value = field.valid(value)
+                # if errors:
+                #     raise FieldValidationError('Field validation failed',errors)
+                self.__dict__[name] = value
 
             setattr(new_class, field_name, property(getter, setter))
         return new_class
+
 
 class ValidationModel(metaclass=ValidatorMeta):
     def __init__(self, **kwargs):
@@ -183,15 +206,25 @@ class ValidationModel(metaclass=ValidatorMeta):
             if field_errors:
                 errors[field_name] = field_errors
         if errors:
-            raise FieldValidationError(errors)
+            raise FieldValidationError(f'{field_name}: Field validation failed', errors)
 
-class PersonModel(ValidationModel):
-    is_admin = Field.boolean(default=True)
-    gpa = Field.number(default=4.5)
-    last_name = Field.string(max_length=5)
+    def build(self):
 
-p1 = PersonModel(is_admin=False, gpa="4.5", last_name="Smith")
-try:
+        return {k: getattr(self, k) for k in self._fields.keys() if not callable(getattr(self, k))}
+        # return my_obj
+
+
+if __name__ == '__main__':
+    class PersonModel(ValidationModel):
+        is_admin = Field.boolean(default=True)
+        gpa = Field.number(default=4.5)
+        last_name = Field.string(max_length=5)
+
+    p1 = PersonModel(is_admin=False, gpa=4.5,
+                     last_name="Smiths", first_name="Mike")
+    # try:
     p1.validate()
-except FieldValidationError as e:
-    print(f"Error: {e.args}")
+    final_obj = p1.build()
+    print(final_obj)
+    # except FieldValidationError as e:
+    #     print(f"Error: {e.errors}")
