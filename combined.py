@@ -204,7 +204,10 @@ class ValidationModel(metaclass=ValidatorMeta):
             raise FieldValidationError(f'{field_name}: Field validation failed', errors)
 
     def build(self):
-
+        """
+        Convert the model's fields to a JSON-serializable dictionary, 
+        excluding fields that are functions.
+        """
         return {k: getattr(self, k) for k in self._fields.keys() if not callable(getattr(self, k))}
         # return my_obj
 
