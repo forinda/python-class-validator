@@ -128,7 +128,65 @@ class StringField(BaseValidator):
         if isinstance(choices, (tuple, list)) and len(choices) > 0 and value not in choices:
             return False, None
         return True, value
+        
+class DateField(BaseValidator):
+    def date(
+        self,
+        message="Must be a valid date",
+        default: Union[datetime, date, None] = None,
+        allow_empty: bool = False,
+        min_date: Union[datetime, date, None] = None,
+        max_date: Union[datetime, date, None] = None
+    ):
+        """
+        This method is for validating date inputs and can include additional constraints such as minimum and maximum dates,
+        allowing empty values, and default values.
 
+        Args:
+            `message (str, optional):` The error message to display if validation fails. Defaults to "Must be a valid date".
+            `default (datetime|date, optional):` The default value to use if the input is None. Defaults to current date and time.
+            `min_date (datetime|date, optional):` The minimum date allowed. If the value is earlier, validation will fail. Defaults to None.
+            `max_date (datetime|date, optional):` The maximum date allowed. If the value is later, validation will fail. Defaults to None.
+            `allow_empty (bool, optional):` If set to True, allows the value to be None. Defaults to False.
+
+        Returns:
+            `DateField`: Returns the instance of the DateField for method chaining.
+        """
+        if default is None:
+            default = datetime.now()
+
+        k_args = {
+            "default": default,
+            "allow_empty": allow_empty,
+            "min_date": min_date,
+            "max_date": max_date
+        }
+        self.add_validator(self.__is_valid__, message, k_args)
+        return self
+
+    def __is_valid__(
+        self,
+        value: Union[datetime, date, None],
+        default: Union[datetime, date],
+        allow_empty: bool,
+        min_date: Union[datetime, date, None],
+        max_date: Union[datetime, date, None]
+    ) -> bool:
+        if value is None:
+            if allow_empty:
+                return True
+            value = default
+
+        if not isinstance(value, (datetime, date)):
+            return False
+
+        if min_date is not None and value < min_date:
+            return False
+
+        if max_date is not None and value > max_date:
+            return False
+
+        return True
 
 class Field:
     string = StringField().string
