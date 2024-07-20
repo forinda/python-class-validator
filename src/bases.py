@@ -24,6 +24,7 @@ class ValidatorMeta(type):
         return new_class
 
 
+
 class BaseValidator:
     def __init__(self):
         self.validators = []
@@ -33,19 +34,18 @@ class BaseValidator:
         A method for processing all the validators added to the instance.
         """
         errors = set()
-        for validator, message, kwargs in self.validators:
-            valid_field, field_value = validator(value, **kwargs)
+        for validator, messages, kwargs in self.validators:
+            valid_field, field_value, error_message = validator(value, **kwargs)
             if not valid_field:
-                errors.add(message)
+                errors.add(error_message)
         return list(errors), value
 
-    def add_validator(self, validator, message, kwargs={}):
+    def add_validator(self, validator, messages, kwargs={}):
         """
         A method for adding a validator to the list.
         """
-        self.validators.append((validator, message, kwargs))
+        self.validators.append((validator, messages, kwargs))
         return self
-
 
 class Model(metaclass=ValidatorMeta):
     def __init__(self, **kwargs):
